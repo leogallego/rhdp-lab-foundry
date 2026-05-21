@@ -13,6 +13,7 @@ Lab Foundry is an orchestrator that composes with the existing RHDP Skills Marke
 /foundry:configure-infra   Interactive infrastructure designer
 /foundry:validate-lab  Validate structure, config, content + generate health checks
 /foundry:add-grading   Generate solve/validate scripts for lab modules
+/foundry:capture-screenshots  Auto-capture service screenshots via Playwright MCP
 /foundry:deploy-lab    Prepare for RHDP deployment (AgnosticV catalog)
 ```
 
