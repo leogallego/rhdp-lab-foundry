@@ -96,8 +96,10 @@ breakage (VMs boot but SSH never works, runner times out after 20 minutes).
 
 - VM userdata MUST use `|-` (literal block scalar), NEVER `>-` (folded).
   The `>-` collapses cloud-init into one line, breaking YAML parsing.
-- VM userdata MUST include `ssh_pwauth: true` for SSH password access.
-  Do NOT use `runcmd` to set PasswordAuthentication.
+- VM userdata MUST use `runcmd` to enable SSH password auth. Write
+  `PasswordAuthentication yes` to `/etc/ssh/sshd_config.d/50-cloud-init.conf`
+  and reload sshd. Do NOT use `ssh_pwauth: true` as it does not work on
+  RHEL 9.5 images (the image's sshd_config overrides cloud-init's setting).
 - VM memory uses `G` (e.g., `16G`), container memory uses `Gi` (e.g., `2Gi`).
 - Container environment must be a flat dict, not a list of {name, value}.
 - Containers do NOT use `routes:`. Only VMs use routes.

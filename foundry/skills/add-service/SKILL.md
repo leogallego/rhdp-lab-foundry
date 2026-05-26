@@ -92,7 +92,9 @@ virtualmachines:
       user: rhel
       password: ansible123!
       chpasswd: { expire: False }
-      ssh_pwauth: true
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
 ```
 
 Setup stub (`setup-vault.sh`): Write VAULT_LIC to /etc/vault.d/vault.hclic, restart vault service,
@@ -133,7 +135,9 @@ virtualmachines:
       user: rhel
       password: ansible123!
       chpasswd: { expire: False }
-      ssh_pwauth: true
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
 ```
 
 Setup stub (`setup-terraform.sh`): Login to images.releases.hashicorp.com, generate
@@ -175,7 +179,9 @@ virtualmachines:
       user: rhel
       password: ansible123!
       chpasswd: { expire: False }
-      ssh_pwauth: true
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
 ```
 
 Setup stub (`setup-vscode.sh`): Configure code-server (0.0.0.0:8080, auth=none),
@@ -329,5 +335,5 @@ See `foundry/references/INDEX.md` for the full tag mapping.
 - Match the YAML style and indentation of the existing instances.yaml
 - Use the same route naming convention as existing routes
 - For containers, always include a restart policy
-- For VMs, include cloud-init userdata with `ssh_pwauth: true` for SSH password access
-- ALWAYS use `|-` (literal block scalar) for userdata, NEVER `>-` (folded scalar). The `>-` collapses cloud-init YAML into a single line, breaking parsing and preventing SSH access. This causes the RHDP runner to time out at wait_for_linux_hosts.
+- For VMs, include cloud-init userdata with `runcmd` to enable SSH password auth. Do NOT use `ssh_pwauth: true` as it does not work on RHEL 9.5 images (sshd_config overrides it). The proven pattern is to write PasswordAuthentication to sshd_config.d and reload sshd.
+- ALWAYS use `|-` (literal block scalar) for userdata, NEVER `>-` (folded scalar). The `>-` collapses cloud-init YAML into a single line, breaking parsing.
