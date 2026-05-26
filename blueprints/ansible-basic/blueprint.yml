@@ -8,7 +8,7 @@ lab_type: zero-touch
 
 virtualmachines:
   - name: control
-    image: base-zero-aap-2.5-container-ce
+    image: aap-2.6-2-ceh-20251103
     memory: 16Gi
     cores: 4
     image_size: 50Gi
