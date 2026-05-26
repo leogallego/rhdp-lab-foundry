@@ -69,7 +69,7 @@ These questions determine the deployment platform and base infrastructure.
 7. **AAP version?** (only if product is Ansible)
    Determines the controller VM image and which features are available (e.g., 2.6 adds Gateway API, OPA integration).
    Options:
-   - AAP 2.6: Current release with Gateway API, platform-level OPA policy, and improved EDA. Image: aap-2.6-2-ceh-20251103. This is the proven image used by all Summit 2026 labs.
+   - AAP 2.6: Current release with Gateway API, platform-level OPA policy, and improved EDA. Image: aap-2.6-6-ceh-20260325. This is the proven image used by all Summit 2026 labs.
    - AAP 2.5: Previous GA release. Image: base-zero-aap-2.5-container-ce. May not be available on all RHDP clusters. Use only if your lab specifically requires 2.5.
    - No AAP: RHEL-only lab without an automation controller. For system administration or OS-level labs.
 

@@ -8,8 +8,8 @@ lab_type: zero-touch
 
 virtualmachines:
   - name: control
-    image: aap-2.6-2-ceh-20251103
-    memory: 16Gi
+    image: aap-2.6-6-ceh-20260325
+    memory: 16G
     cores: 4
     image_size: 50Gi
     services:
@@ -32,7 +32,7 @@ virtualmachines:
 
   - name: rhel-1
     image: rhel-9.5
-    memory: 4Gi
+    memory: 4G
     cores: 2
     image_size: 30Gi
     tags:
@@ -41,7 +41,7 @@ virtualmachines:
 
   - name: rhel-2
     image: rhel-9.5
-    memory: 4Gi
+    memory: 4G
     cores: 2
     image_size: 30Gi
     tags:
