@@ -1,6 +1,8 @@
 ---
 name: rhel-security
-description: RHEL security lab with control node and managed nodes for security automation (SELinux, Keylime, USBGuard, compliance)
+description: >-
+  RHEL security lab with control node and
+  managed nodes for security automation
 product: rhel
 lab_type: zero-touch
 
@@ -12,16 +14,27 @@ virtualmachines:
     image_size: 30Gi
     services:
       - name: ssh
-        port: 22
+        ports:
+          - port: 22
+            protocol: TCP
+            targetPort: 22
+            name: ssh
       - name: cockpit
-        port: 9090
+        ports:
+          - port: 9090
+            protocol: TCP
+            targetPort: 9090
+            name: cockpit
     routes:
       - name: cockpit
+        host: cockpit
         service: cockpit
-        target_port: 9090
-        tls: Edge
+        targetPort: 9090
+        tls: true
+        tls_termination: Edge
     tags:
-      AnsibleGroup: control
+      - key: AnsibleGroup
+        value: control
 
   - name: rhel-1
     image: rhel93
@@ -29,7 +42,8 @@ virtualmachines:
     cores: 2
     image_size: 30Gi
     tags:
-      AnsibleGroup: managed_nodes
+      - key: AnsibleGroup
+        value: managed_nodes
 
   - name: rhel-2
     image: rhel93
@@ -37,28 +51,57 @@ virtualmachines:
     cores: 2
     image_size: 30Gi
     tags:
-      AnsibleGroup: managed_nodes
+      - key: AnsibleGroup
+        value: managed_nodes
 
 containers:
   - name: gitea
-    image: docker.io/gitea/gitea:1.16.8-rootless
+    image: gitea/gitea:1.16.8-rootless
     ports:
-      - 3000
+      - name: gitea
+        containerPort: 3000
+        protocol: TCP
     environment:
-      - name: GITEA__webhook__ALLOWED_HOST_LIST
-        value: "*"
+      GITEA__DEFAULT__RUN_MODE: dev
+      GITEA__database__DB_TYPE: sqlite3
+      GITEA__database__PATH: /data/gitea/gitea.db
+      GITEA__picture__DISABLE_GRAVATAR: "true"
+      GITEA__repository__DEFAULT_PRIVATE: "false"
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__server__SSH_DOMAIN: gitea
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      GITEA__webhook__ALLOWED_HOST_LIST: "*"
+    volumeMounts:
+      - name: gitea-varlib
+        mountPath: /var/lib/gitea/
+      - name: gitea-data
+        mountPath: /data/
+      - name: gitea-etc
+        mountPath: /etc/gitea
+    volumes:
+      - name: gitea-data
+        emptyDir: {}
+      - name: gitea-etc
+        emptyDir: {}
+      - name: gitea-varlib
+        emptyDir: {}
+    commands:
+      - >-
+        gitea admin user create --admin
+        --username gitea --password ansible123!
+        --email gitea@giteadummy.com
+        --must-change-password=false
+    memory: 2Gi
     services:
       - name: gitea
-        port: 3000
-    routes:
-      - name: gitea
-        service: gitea
-        target_port: 3000
-        tls: Edge
+        ports:
+          - port: 3000
+            protocol: TCP
+            targetPort: 3000
 
 ingress_ports:
-  - 3000  # Gitea
-  - 9090  # Cockpit
+  - 3000
+  - 9090
 
 tabs:
   - name: Cockpit

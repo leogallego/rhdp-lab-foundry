@@ -1,6 +1,8 @@
 ---
 name: ansible-basic
-description: Standard Ansible Automation Platform lab with controller, 2 RHEL nodes, and Gitea
+description: >-
+  Standard AAP lab with controller,
+  2 RHEL nodes, and Gitea
 product: ansible
 lab_type: zero-touch
 
@@ -11,17 +13,22 @@ virtualmachines:
     cores: 4
     image_size: 50Gi
     services:
-      - name: aap-https
-        port: 443
-      - name: aap-http
-        port: 80
+      - name: control-https
+        ports:
+          - port: 443
+            protocol: TCP
+            targetPort: 443
+            name: control-https
     routes:
-      - name: aap-controller
-        service: aap-https
-        target_port: 443
-        tls: Reencrypt
+      - name: control
+        host: control
+        service: control-https
+        targetPort: 443
+        tls: true
+        tls_termination: reencrypt
     tags:
-      AnsibleGroup: control
+      - key: AnsibleGroup
+        value: control
 
   - name: rhel-1
     image: rhel93
@@ -29,7 +36,8 @@ virtualmachines:
     cores: 2
     image_size: 30Gi
     tags:
-      AnsibleGroup: managed_nodes
+      - key: AnsibleGroup
+        value: managed_nodes
 
   - name: rhel-2
     image: rhel93
@@ -37,27 +45,58 @@ virtualmachines:
     cores: 2
     image_size: 30Gi
     tags:
-      AnsibleGroup: managed_nodes
+      - key: AnsibleGroup
+        value: managed_nodes
 
 containers:
   - name: gitea
-    image: docker.io/gitea/gitea:1.16.8-rootless
+    image: gitea/gitea:1.16.8-rootless
     ports:
-      - 3000
+      - name: gitea
+        containerPort: 3000
+        protocol: TCP
     environment:
-      - name: GITEA__webhook__ALLOWED_HOST_LIST
-        value: "*"
+      GITEA__DEFAULT__RUN_MODE: dev
+      GITEA__database__DB_TYPE: sqlite3
+      GITEA__database__PATH: /data/gitea/gitea.db
+      GITEA__picture__DISABLE_GRAVATAR: "true"
+      GITEA__repository__DEFAULT_PRIVATE: "false"
+      GITEA__repository__DEFAULT_PUSH_CREATE_PRIVATE: "false"
+      GITEA__repository__ENABLE_PUSH_CREATE_ORG: "true"
+      GITEA__repository__ENABLE_PUSH_CREATE_USER: "true"
+      GITEA__repository__ONLY_ALLOW_PUSH_IF_GITEA_ENVIRONMENT_SET: "false"
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__server__SSH_DOMAIN: gitea
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      GITEA__service__REQUIRE_SIGNIN_VIEW: "false"
+      GITEA__webhook__ALLOWED_HOST_LIST: "*"
+    volumeMounts:
+      - name: gitea-varlib
+        mountPath: /var/lib/gitea/
+      - name: gitea-data
+        mountPath: /data/
+      - name: gitea-etc
+        mountPath: /etc/gitea
+    volumes:
+      - name: gitea-data
+        emptyDir: {}
+      - name: gitea-etc
+        emptyDir: {}
+      - name: gitea-varlib
+        emptyDir: {}
+    commands:
+      - gitea admin user create --admin --username gitea --password ansible123!
+        --email gitea@giteadummy.com --must-change-password=false
+    memory: 2Gi
     services:
       - name: gitea
-        port: 3000
-    routes:
-      - name: gitea
-        service: gitea
-        target_port: 3000
-        tls: Edge
+        ports:
+          - port: 3000
+            protocol: TCP
+            targetPort: 3000
 
 ingress_ports:
-  - 3000  # Gitea
+  - 3000
 
 tabs:
   - name: AAP Controller
