@@ -245,8 +245,8 @@ These questions determine which containers and services to deploy alongside the 
     After AAP boots, should the lab automatically configure credentials, projects, inventories, job templates, and workflows? Or should students do this manually as part of the exercises?
     Options:
     - No (students configure manually): Students create AAP resources as part of the lab exercises. The lab starts with a blank AAP controller. Choose this when AAP configuration IS the learning objective.
-    - Yes, full automation: Generate setup-aap-configure.sh that configures everything automatically. Students see a fully-configured AAP when they start. Choose this when students should focus on USING the automation, not building it. Generates OAuth token, credentials, projects, inventories, templates, and workflows.
-    - Yes, partial: Auto-configure credentials and projects only. Students create job templates and workflows themselves. A middle ground that saves time on tedious setup while still teaching template creation.
+    - Yes, full automation: Generates the two-phase setup scripts (setup-control.sh for bootstrap with Automation Hub collections, setup-control-configure.sh for AAP configuration using ansible.controller modules). Students see a fully-configured AAP when they start. Choose this when students should focus on USING the automation, not building it.
+    - Yes, partial: Same two-phase setup but only creates credentials and projects. Students create job templates and workflows themselves. A middle ground that saves time on tedious setup while still teaching template creation.
 
 31. **Lab duration?**
     How long is a single session? This affects how many modules you can cover and how deep each exercise goes.
