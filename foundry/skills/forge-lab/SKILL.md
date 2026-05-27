@@ -388,26 +388,18 @@ is strict about YAML structure and will fail with cryptic errors otherwise.
 
 Copy these exactly. Do NOT modify the structure.
 
-**config/networks.yaml** MUST be a flat YAML list at root level.
-This is the most common scaffolding error. The RHDP runner passes
-this file directly to a Jinja2 loop and it WILL fail if wrapped
-in any key.
+**config/networks.yaml** Write EXACTLY these two lines and nothing else:
 
-CORRECT (the ONLY valid format):
-```yaml
+```
 ---
 - name: default
 ```
 
-WRONG (causes "Invalid data passed to loop" error):
-```yaml
----
-networks:
-  - name: default
-```
-
-After generating networks.yaml, ALWAYS verify the first non-comment
-line after `---` starts with `- name:`, not `networks:`.
+THIS IS THE COMPLETE FILE. There are only two lines. The first line
+is three dashes. The second line starts with a hyphen. There is no
+`networks:` key. There is no indentation on the second line. If you
+write anything other than these exact two lines, the lab WILL fail
+with "Invalid data passed to loop".
 
 **config/firewall.yaml** must use flat indentation:
 ```yaml
