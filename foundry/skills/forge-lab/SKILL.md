@@ -461,24 +461,16 @@ script will be retried by the showroom pod if it fails, so use a wait loop
 with `sleep 10` between attempts. Avoid `set -euo pipefail` before the
 wait loop or ensure curl failures don't kill the script.
 
-## Container Route Behavior
+## Containers (Gitea, Splunk, etc.)
 
-Containers (Gitea, Splunk, Mattermost) work in production when the lab is
-deployed through AgnosticV. Nuno confirms: "the gitea container works, I
-haven't had issues with it."
+Containers work on both the Developer Experience CI and AgnosticV production.
+Nuno confirms: "the gitea container works, I haven't had issues with it."
 
-The Developer Experience CI (used for testing before AgnosticV onboarding)
-does NOT create external routes for containers, only for VMs. This is a
-testing-only limitation.
-
-When generating a lab:
-- ALWAYS include containers like Gitea if the lab needs them. Do NOT
-  remove containers just because of Developer Experience CI limitations.
-- ALWAYS include container tabs in ui-config.yml. They work in production.
-- When testing via Developer Experience CI: the container tabs won't load
-  in the Showroom iframe, but the containers are running and accessible
-  internally via Terminal (`curl http://gitea:3000`). The developer can
-  also create the route manually via `oc create route`.
+When generating a lab with containers:
+- ALWAYS include the full container definition with `services:` and `routes:`
+- Gitea needs `memory: 4Gi`, `volumeMounts`, `volumes`, and `commands`
+- Gitea `commands` should create the admin user AND create an org for repos
+- Use Nuno's proven Gitea definition from `foundry/references/zt-zero-trust-aap.md`
 
 ## Cross-Layer Consistency
 
