@@ -467,7 +467,9 @@ failures:
 
 3. **instances.yaml**: Every VM must have `networks:`, `tags:`, and
    `userdata:` with `|-` scalar. AAP controller must have 32G memory
-   and `tls_destinationCACertificate` on the route.
+   and `tls_destinationCACertificate` on the route. Verify the AAP
+   image is EXACTLY `aap-2.6-6-ceh-20260325` (not `base-zero-aap-*`
+   or any other variant). RHEL image must be EXACTLY `rhel-9.5`.
 
 4. **ansible.cfg**: Must exist in setup-automation/ with
    `host_key_checking = False`.
