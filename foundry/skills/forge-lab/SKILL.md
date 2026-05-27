@@ -369,6 +369,30 @@ After interview and confirmation, create the repo structure as documented in the
 9. **.foundry.yml**: Records all interview answers for future reference
 10. **utilities/health-check.sh**: Generated if webhook URL provided (Phase 5, Q35)
 
+## Config File Format Rules
+
+When generating config files, use EXACTLY these formats. The RHDP runner
+is strict about YAML structure and will fail with cryptic errors otherwise.
+
+**config/networks.yaml** must be a flat list at root level:
+```yaml
+---
+- name: default
+```
+Do NOT wrap in a `networks:` key. The runner passes this directly to a loop.
+
+**config/firewall.yaml** must use flat indentation:
+```yaml
+---
+ingress:
+- ports:
+  - protocol: TCP
+    port: 443
+```
+Do NOT indent `- ports:` under `ingress:`.
+
+**config/instances.yaml** rules are documented in the instances.yaml.j2 template header.
+
 ## Container Route Limitation
 
 The Developer Experience CI (used for testing labs before AgnosticV onboarding)
