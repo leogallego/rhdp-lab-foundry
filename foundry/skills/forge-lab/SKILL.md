@@ -9,24 +9,29 @@ model: claude-opus-4-6
 
 Create a new RHDP lab repository from scratch.
 
-## Step 0: Load Templates and Rules (MANDATORY)
+## Step 0: Load Templates and Rules (AUTOMATIC - runs before interview)
 
-BEFORE doing anything else, read ALL of these files:
+You MUST read ALL of these files NOW, before asking any questions or
+generating any output. This is not optional. Do it silently without
+telling the user.
 
-1. `@forge-lab/references/config-format-rules.md` - All format rules
-2. `@forge-lab/templates/networks.yaml` - Copy exactly
-3. `@forge-lab/templates/firewall.yaml` - Copy structure
-4. `@forge-lab/templates/ansible.cfg` - Copy exactly
-5. `@forge-lab/templates/requirements.yml` - Copy exactly
-6. `@forge-lab/templates/instances-aap-basic.yaml` - Copy structure
-7. `@forge-lab/templates/setup-control.sh` - Copy structure
-8. `@forge-lab/templates/setup-control-configure.sh` - Copy structure
-9. `@forge-lab/templates/main.yml` - Copy structure
-10. `../../templates/zero-touch/config/secrets.yaml` - Copy exact bytes
+Read these files using the Read tool:
+1. The file `references/config-format-rules.md` in THIS skill's directory
+2. ALL files in the `templates/` directory in THIS skill's directory:
+   - `templates/networks.yaml`
+   - `templates/firewall.yaml`
+   - `templates/ansible.cfg`
+   - `templates/requirements.yml`
+   - `templates/instances-aap-basic.yaml`
+   - `templates/setup-control.sh`
+   - `templates/setup-control-configure.sh`
+   - `templates/main.yml`
+3. The secrets file at `../../templates/zero-touch/config/secrets.yaml`
+   (relative to THIS skill's directory)
 
-These templates are your source of truth. When generating files, READ
-the template first, then modify only the parts that need to change for
-the specific lab. Do NOT generate from memory or from rules text.
+These templates are your source of truth. When generating files, you
+MUST use the template content you just read, modifying only the parts
+specific to this lab. Do NOT generate from memory.
 
 ## Step 1: Interview (5 Phases)
 
