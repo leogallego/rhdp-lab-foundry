@@ -465,11 +465,20 @@ failures:
 2. **firewall.yaml**: First entry under `ingress:` must be `- ports:`
    at the same indentation level, not indented further.
 
-3. **instances.yaml**: Every VM must have `networks:`, `tags:`, and
-   `userdata:` with `|-` scalar. AAP controller must have 32G memory
-   and `tls_destinationCACertificate` on the route. Verify the AAP
-   image is EXACTLY `aap-2.6-6-ceh-20260325` (not `base-zero-aap-*`
-   or any other variant). RHEL image must be EXACTLY `rhel-9.5`.
+3. **instances.yaml**: Read the file back and verify ALL of these:
+   - AAP image is EXACTLY `aap-2.6-6-ceh-20260325` (not `base-zero-aap-*`)
+   - RHEL image is EXACTLY `rhel-9.5` (not `rhel93`)
+   - AAP controller memory is `32G`
+   - VM memory uses `G` not `Gi`
+   - Every VM has `networks:` with `- default`
+   - Every VM has `tags:` as list of `{key: X, value: Y}` objects,
+     NOT flat dicts like `{AnsibleGroup: control}`.
+     CORRECT: `- key: AnsibleGroup\n  value: isolated`
+     WRONG: `- AnsibleGroup: control`
+   - Every VM has `userdata: |-` with runcmd for SSH
+   - AAP route has `tls_destinationCACertificate`
+   - Container environment is flat dict not list
+   - Container service ports have `name` field
 
 4. **ansible.cfg**: Must exist in setup-automation/ with
    `host_key_checking = False`.
