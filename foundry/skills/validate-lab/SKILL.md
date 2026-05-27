@@ -78,6 +78,37 @@ Validate setup and runtime automation.
 - [ ] runtime-automation module directories match content modules
 - [ ] Each module has at least setup script
 
+### Stage 4b: consistency
+Cross-layer consistency check between infrastructure, content, and validation.
+
+This stage catches the most common lab failures: content references resources
+that don't exist in the infrastructure, or validation scripts check for hosts
+that were removed.
+
+**Host consistency:**
+- [ ] Every host mentioned in content pages exists in config/instances.yaml
+- [ ] Every host in validation scripts exists in config/instances.yaml
+- [ ] Every host in solve scripts exists in config/instances.yaml
+- [ ] Content does not reference removed hosts (e.g., rhel-2 after VM was removed)
+- [ ] ui-config.yml module count matches content page count
+
+**Resource consistency (when AAP post-install is configured):**
+- [ ] Content references to "pre-configured" credentials match what setup scripts create
+- [ ] Content references to inventories match what setup scripts create
+- [ ] If setup-control.sh is a no-op, content should NOT reference pre-configured AAP resources
+
+**Service consistency:**
+- [ ] Every tab URL in ui-config.yml has a corresponding route in instances.yaml
+- [ ] Gitea tab exists only if Gitea container is defined
+- [ ] Container services that need external access have routes defined
+
+**How to run:**
+1. Parse all hostnames from instances.yaml (VM names + container names)
+2. Grep content pages for hostname references
+3. Grep validation scripts for hostname references
+4. Flag any hostname in content/validation that is NOT in instances.yaml
+5. Flag any pre-configured resource reference in content that has no setup script creating it
+
 ### Stage 5: catalog
 Delegate to agnosticv:validator if available.
 

@@ -19,6 +19,19 @@ Adds a new numbered module to an existing lab with content page, runtime-automat
 6. Update content/modules/ROOT/nav.adoc with new module entry
 7. Update .foundry.yml modules list
 
+## Consistency Check
+
+Before generating content, read config/instances.yaml to get the list of
+actual hosts and services. Content MUST only reference hosts that exist.
+
+- Only reference VM names from instances.yaml (e.g., rhel-1, control)
+- Only reference container names from instances.yaml (e.g., gitea)
+- If AAP post-install is not configured, instruct students to create
+  credentials, inventories, and templates manually
+- Validation scripts must check only for resources the content
+  instructs students to create
+- Solve scripts must create exactly what content describes
+
 ## Delegation
 
 If showroom:create-lab is available, offer to generate full module content:

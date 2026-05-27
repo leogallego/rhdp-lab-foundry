@@ -369,6 +369,26 @@ After interview and confirmation, create the repo structure as documented in the
 9. **.foundry.yml**: Records all interview answers for future reference
 10. **utilities/health-check.sh**: Generated if webhook URL provided (Phase 5, Q35)
 
+## Cross-Layer Consistency
+
+When generating a lab, ensure all three layers are aligned:
+
+1. **instances.yaml** defines which hosts exist
+2. **Content pages** reference only hosts that exist in instances.yaml
+3. **Validation scripts** check only for resources that content instructs students to create
+4. **Solve scripts** create exactly what content describes
+5. **ui-config.yml** tabs match services defined in instances.yaml
+
+When infrastructure changes (e.g., removing a VM), update ALL layers:
+- Remove host references from content pages
+- Remove host checks from validation scripts
+- Remove host creation from solve scripts
+- Update ui-config.yml if a tab was associated with the removed host
+
+If AAP post-install is "No" (students configure manually), content must
+instruct students to create credentials, inventories, and templates.
+Do NOT reference "pre-configured" resources when setup scripts don't create them.
+
 ## Important Notes
 
 - NEVER skip the interview. The exhaustive question set is what makes this tool valuable.
