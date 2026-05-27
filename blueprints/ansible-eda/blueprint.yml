@@ -155,7 +155,7 @@ containers:
         --username gitea --password ansible123!
         --email gitea@giteadummy.com
         --must-change-password=false
-    memory: 2Gi
+    memory: 4Gi
     services:
       - name: gitea
         ports:

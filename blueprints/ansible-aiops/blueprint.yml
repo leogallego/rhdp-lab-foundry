@@ -169,7 +169,7 @@ containers:
         --username gitea --password ansible123!
         --email gitea@giteadummy.com
         --must-change-password=false
-    memory: 2Gi
+    memory: 4Gi
     services:
       - name: gitea
         ports:
@@ -241,7 +241,7 @@ containers:
         --accept-sgt-current-at-splunk-com
       SPLUNK_START_ARGS: "--accept-license"
       SPLUNK_PASSWORD: "RedHat123!"
-    memory: 2Gi
+    memory: 4Gi
     services:
       - name: splunk-web
         ports:
