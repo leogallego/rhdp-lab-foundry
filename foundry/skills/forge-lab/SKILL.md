@@ -596,6 +596,253 @@ Key patterns that MUST be followed exactly:
 - `userdata` uses `|-` with `runcmd` (not `ssh_pwauth`)
 - AAP route has `tls_destinationCACertificate`
 
+## Canonical setup-control.sh (Phase 1: Bootstrap)
+
+ALWAYS use this exact structure. Modify collection list as needed.
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+echo "Starting Control node setup (bootstrap phase)..."
+export ANSIBLE_LOCALHOST_WARNING=False
+export ANSIBLE_INVENTORY_UNPARSED_WARNING=False
+
+retry() {
+    local max_attempts=3 delay=5 desc="$1"; shift
+    for ((i = 1; i <= max_attempts; i++)); do
+        echo "Attempt $i/$max_attempts: $desc"
+        if "$@"; then return 0; fi
+        [ $i -lt $max_attempts ] && sleep $delay
+    done
+    echo "FATAL: Failed after $max_attempts attempts: $desc"; exit 1
+}
+
+run_if_needed() {
+    local desc="$1"; shift
+    local check=()
+    while [[ $# -gt 0 && "$1" != "--" ]]; do check+=("$1"); shift; done
+    shift
+    if "${check[@]}" &>/dev/null; then echo "SKIP: $desc"
+    else retry "$desc" "$@"; fi
+}
+
+for var in AH_TOKEN; do
+    [ -z "${!var:-}" ] && { echo "ERROR: $var not set"; exit 1; }
+done
+
+tee ~/.ansible.cfg > /dev/null <<EOF
+[defaults]
+host_key_checking = False
+[galaxy]
+server_list = automation_hub, validated, galaxy
+[galaxy_server.automation_hub]
+url = https://console.redhat.com/api/automation-hub/content/published/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.validated]
+url = https://console.redhat.com/api/automation-hub/content/validated/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.galaxy]
+url=https://galaxy.ansible.com/
+EOF
+
+run_if_needed "Install base packages" rpm -q git -- dnf install -y dnf-utils git
+
+tee /tmp/requirements.yml > /dev/null <<EOF
+---
+collections:
+  - name: ansible.controller
+  - name: ansible.posix
+  - name: community.general
+EOF
+
+run_if_needed "Install Ansible collections" \
+    bash -c 'ansible-galaxy collection list | grep -q "ansible.controller"' \
+    -- ansible-galaxy collection install -r /tmp/requirements.yml
+
+if ! ansible-galaxy collection list 2>/dev/null | grep -q "ansible.controller"; then
+    echo "INFO: ansible.controller not found; symlinking awx.awx"
+    mkdir -p ~/.ansible/collections/ansible_collections/ansible
+    ln -sfn ~/.ansible/collections/ansible_collections/awx/awx \
+            ~/.ansible/collections/ansible_collections/ansible/controller
+fi
+
+echo "Control bootstrap phase complete."
+```
+
+## Canonical setup-control-configure.sh (Phase 2: Configure AAP)
+
+ALWAYS use this exact structure. Modify the inline playbook tasks as needed.
+Do NOT use `set -euo pipefail`. Do NOT use `controller_validate_certs` as
+a play var. ALWAYS use `module_defaults` with `validate_certs: false`.
+ALWAYS use `https://localhost` (port 443, NOT 8443).
+Credential username/password MUST match the VM userdata user/password.
+
+```bash
+#!/bin/bash
+# No set -euo pipefail: curl wait loop must survive failures
+
+echo "Starting Control node setup (configure phase)..."
+export ANSIBLE_LOCALHOST_WARNING=False
+export ANSIBLE_INVENTORY_UNPARSED_WARNING=False
+
+AAP_HOST="https://localhost"
+AAP_USER="admin"
+AAP_PASS="ansible123!"
+
+echo "Waiting for AAP controller..."
+for i in $(seq 1 60); do
+    CODE=$(curl -sk -o /dev/null -w "%{http_code}" \
+        "${AAP_HOST}/api/controller/v2/ping/" \
+        -u "${AAP_USER}:${AAP_PASS}" 2>/dev/null || echo "000")
+    if [ "$CODE" = "200" ]; then
+        echo "  AAP ready (attempt $i)"; break
+    fi
+    [ "$i" = "60" ] && { echo "FATAL: AAP not ready"; exit 1; }
+    echo "  waiting... (attempt $i, HTTP $CODE)"; sleep 10
+done
+
+echo "Generating AAP OAuth token..."
+CONTROLLER_OAUTH_TOKEN=$(curl -sk -X POST \
+    "${AAP_HOST}/api/controller/v2/tokens/" \
+    -H "Content-Type: application/json" \
+    -u "${AAP_USER}:${AAP_PASS}" \
+    -d '{"description":"setup","application":null,"scope":"write"}' | \
+    python3 -c "import sys,json; print(json.load(sys.stdin)['token'])" 2>/dev/null)
+[ -z "${CONTROLLER_OAUTH_TOKEN}" ] && { echo "FATAL: No token"; exit 1; }
+echo "  Token OK"
+
+export CONTROLLER_HOST="${AAP_HOST}"
+export CONTROLLER_OAUTH_TOKEN
+export CONTROLLER_VERIFY_SSL=false
+
+cat > /tmp/configure-aap.yml << 'PLAYBOOK'
+---
+- name: Configure AAP
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  module_defaults:
+    group/ansible.controller.controller:
+      controller_host: "{{ lookup('env', 'CONTROLLER_HOST') }}"
+      controller_oauthtoken: "{{ lookup('env', 'CONTROLLER_OAUTH_TOKEN') }}"
+      validate_certs: false
+
+  tasks:
+    - name: Create machine credential
+      ansible.controller.credential:
+        name: "Lab Machine Credential"
+        organization: "Default"
+        credential_type: "Machine"
+        inputs:
+          username: rhel
+          password: ansible123!
+          become_method: sudo
+          become_password: ansible123!
+        state: present
+
+    - name: Create project
+      ansible.controller.project:
+        name: "Lab Project"
+        organization: "Default"
+        scm_type: git
+        scm_url: "https://github.com/OWNER/REPO.git"
+        scm_branch: main
+        state: present
+        wait: true
+        timeout: 120
+
+    - name: Create inventory
+      ansible.controller.inventory:
+        name: "Lab Inventory"
+        organization: "Default"
+        state: present
+
+    - name: Add host
+      ansible.controller.host:
+        name: node1
+        inventory: "Lab Inventory"
+        state: present
+
+    - name: Create job template
+      ansible.controller.job_template:
+        name: "My Job Template"
+        organization: "Default"
+        project: "Lab Project"
+        playbook: playbooks/main.yml
+        inventory: "Lab Inventory"
+        credential: "Lab Machine Credential"
+        job_type: run
+        state: present
+PLAYBOOK
+
+ansible-playbook /tmp/configure-aap.yml
+
+echo "Configure phase complete."
+```
+
+## Canonical main.yml (Setup Orchestrator)
+
+ALWAYS use this exact structure. Loads secrets.yaml for AH token,
+runs both phases sequentially on the controller VM.
+
+```yaml
+---
+- name: Create inventory
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../config/secrets.yaml
+  tasks:
+    - name: Add control host
+      ansible.builtin.add_host:
+        name: control
+        ansible_ssh_host: "{{ lookup('env', 'BASTION_HOST') }}"
+        ansible_ssh_port: "{{ lookup('env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('env', 'BASTION_PASSWORD') }}"
+        ah_token: "{{ ahtoken }}"
+
+- name: Setup control node
+  hosts: control
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+    - name: Create scripts directory
+      ansible.builtin.file:
+        path: /tmp/setup-scripts
+        state: directory
+        mode: "0755"
+    - name: Copy bootstrap script
+      ansible.builtin.copy:
+        src: ./setup-control.sh
+        dest: /tmp/setup-scripts/setup-control.sh
+        mode: "0755"
+    - name: Copy configure script
+      ansible.builtin.copy:
+        src: ./setup-control-configure.sh
+        dest: /tmp/setup-scripts/setup-control-configure.sh
+        mode: "0755"
+    - name: "Phase 1: Bootstrap"
+      ansible.builtin.shell: >-
+        /tmp/setup-scripts/setup-control.sh
+        > /tmp/setup-scripts/setup-control.log 2>&1
+      become: true
+      environment:
+        AH_TOKEN: "{{ ah_token }}"
+    - name: "Phase 2: Configure AAP"
+      ansible.builtin.shell: >-
+        /tmp/setup-scripts/setup-control-configure.sh
+        > /tmp/setup-scripts/setup-control-configure.log 2>&1
+      become: true
+```
+
 ## Post-Scaffolding Validation
 
 After generating all files, ALWAYS run these checks before reporting
