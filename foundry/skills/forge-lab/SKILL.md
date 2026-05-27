@@ -626,6 +626,11 @@ failures:
 5. **Content consistency**: Every hostname in content pages must exist
    in instances.yaml.
 
+6. **Credential consistency**: The machine credential username/password
+   in setup-control-configure.sh MUST match the user/password in the
+   VM userdata in instances.yaml. If userdata creates user `rhel` with
+   password `ansible123!`, the credential must use the same values.
+
 ## Important Notes
 
 - NEVER skip the interview. The exhaustive question set is what makes this tool valuable.
