@@ -118,6 +118,15 @@ For each file, READ the template first, then modify only what's needed.
   Modify ONLY the inline playbook tasks for this lab's AAP resources.
   Keep module_defaults, validate_certs, env var exports exactly as template.
 
+→ Read `@foundry/skills/forge-lab/templates/runtime-main.yml`
+  Write to `runtime-automation/main.yml`. Required for Showroom
+  solve/validate buttons. Do not modify.
+
+**Runtime automation scripts** go in `runtime-automation/module-NN/`:
+- Name scripts as `solve-control.sh` and `validation-control.sh`
+  (matching the bastion hostname `control`), NOT `solve-host1.sh`.
+- Make all scripts executable.
+
 ### 4c. Generate from scratch:
 
 - `ui-config.yml` - tabs with `external: false`, trailing slash on URLs
