@@ -57,6 +57,8 @@ These rules are non-negotiable. Violating ANY of them causes provisioning failur
 
 | Rule | Detail |
 |:-----|:-------|
+| antora.name | MUST be `modules`. Showroom content server uses this to build URL paths. |
+| antora.dir | MUST be `www`. Showroom serves static files from this directory. |
 | Tabs | `external: false` for iframe embedding |
 | URLs | Trailing slash: `https://control-${guid}.${domain}/` |
-| Module format | `name:`, `label:`, `solveButton:` |
+| Module format | `name:`, `label:` (NOT `title:`), `solveButton:` |
